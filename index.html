@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reciprocal Pronouns Card Flip Challenge</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;
+  background:#1a0533;
+  overflow-x:hidden;
+}
+
+/* ── Animated starfield background ── */
+body::before {
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 30%, #3d0a6e55 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 70%, #0a2e6e55 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+.stars {
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.star {
+  position:absolute;border-radius:50%;background:#fff;
+  animation:twinkle var(--d) ease-in-out infinite alternate;
+  opacity:var(--op);
+}
+@keyframes twinkle{from{opacity:var(--op)}to{opacity:.1}}
+
+.screen{display:none;width:100%;max-width:680px;position:relative;z-index:1;animation:popIn .45s cubic-bezier(.34,1.56,.64,1)}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+@keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+
+/* ── Panel ── */
+.panel {
+  background:linear-gradient(160deg,#2d0b5a,#1a1a6e);
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:28px;padding:34px 30px;width:100%;
+  box-shadow:0 0 60px #7c3aed66,0 20px 60px rgba(0,0,0,.5);
+  text-align:center;position:relative;overflow:hidden;
+}
+.panel::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top, rgba(139,92,246,.18), transparent 70%);
+  pointer-events:none;
+}
+
+h1{font-size:2rem;font-weight:900;color:#f0c6ff;margin-bottom:6px;text-shadow:0 0 20px #c084fc}
+h2{font-size:1.3rem;font-weight:900;color:#f0c6ff;margin-bottom:10px}
+.subtitle{color:#c4b5fd;margin-bottom:22px;font-size:.95rem}
+
+/* ── Rule box ── */
+.rule-box {
+  background:rgba(139,92,246,.2);border:1.5px solid #7c3aed;
+  border-radius:16px;padding:14px 18px;margin:14px 0 22px;text-align:left;
+}
+.rule-box p{color:#e9d5ff;font-size:.98rem;margin:5px 0}
+.rule-box strong{color:#f0abfc}
+
+/* ── Input ── */
+input[type=text] {
+  width:100%;padding:14px 18px;
+  border:2.5px solid #7c3aed;border-radius:14px;
+  font-size:1.1rem;font-family:'Nunito',sans-serif;
+  color:#f0e6ff;background:rgba(255,255,255,.08);
+  outline:none;transition:border .2s,box-shadow .2s;margin-bottom:20px;
+}
+input[type=text]::placeholder{color:#9f7aea}
+input[type=text]:focus{border-color:#c084fc;box-shadow:0 0 0 4px rgba(192,132,252,.25)}
+
+/* ── Levels ── */
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 24px}
+.level-card {
+  border-radius:18px;padding:18px 10px;cursor:pointer;
+  border:2.5px solid transparent;transition:transform .2s,box-shadow .2s,border .2s;
+  position:relative;overflow:hidden;
+}
+.level-card:hover{transform:translateY(-4px)}
+.level-card.selected{border-color:#f0abfc;box-shadow:0 0 0 4px rgba(240,171,252,.3)}
+.level-card .lv-icon{font-size:2.2rem;display:block;margin-bottom:6px}
+.level-card .lv-name{font-weight:900;font-size:1rem;display:block}
+.level-card .lv-desc{font-size:.78rem;margin-top:4px;display:block;opacity:.85}
+#lv-easy{background:linear-gradient(135deg,#065f46,#059669);color:#d1fae5}
+#lv-medium{background:linear-gradient(135deg,#1e40af,#3b82f6);color:#dbeafe}
+#lv-hard{background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fee2e2}
+
+/* ── Buttons ── */
+.btn {
+  padding:13px 28px;border:none;border-radius:50px;
+  font-size:1rem;font-weight:900;font-family:'Nunito',sans-serif;
+  cursor:pointer;transition:transform .15s,box-shadow .2s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.btn:active{transform:translateY(0)}
+.btn-primary{
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;
+  box-shadow:0 4px 20px rgba(139,92,246,.5);font-size:1.1rem;
+}
+.btn-answer {
+  width:100%;background:rgba(255,255,255,.07);color:#e9d5ff;
+  border:2px solid rgba(255,255,255,.2);border-radius:16px;
+  font-size:1.1rem;font-family:'Nunito',sans-serif;
+  margin:7px 0;padding:15px;transition:background .2s,border .2s,transform .15s;
+  font-weight:700;cursor:pointer;
+}
+.btn-answer:hover:not(:disabled){background:rgba(139,92,246,.3);border-color:#a78bfa;transform:scale(1.02)}
+.btn-answer.correct{background:linear-gradient(135deg,#065f46,#059669)!important;border-color:#34d399!important;color:#d1fae5!important;transform:scale(1.03)}
+.btn-answer.wrong{background:linear-gradient(135deg,#7f1d1d,#dc2626)!important;border-color:#f87171!important;color:#fee2e2!important}
+.btn-answer:disabled{cursor:default}
+.btn-next{background:linear-gradient(135deg,#059669,#34d399);color:#fff;margin-top:14px;box-shadow:0 4px 16px rgba(52,211,153,.4)}
+.btn-cert{background:linear-gradient(135deg,#d97706,#fbbf24);color:#1c0a00;box-shadow:0 4px 16px rgba(251,191,36,.4)}
+.btn-print{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff}
+.btn-replay{background:rgba(255,255,255,.1);color:#e9d5ff;border:2px solid rgba(255,255,255,.25)}
+.btn-mute {
+  position:fixed;top:14px;right:14px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,.25);border-radius:50%;
+  width:46px;height:46px;font-size:1.3rem;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.3);
+  display:none;align-items:center;justify-content:center;z-index:999;
+  transition:transform .2s;
+}
+.btn-mute:hover{transform:scale(1.1)}
+
+/* ── Level badge ── */
+.level-badge {
+  display:inline-block;padding:4px 14px;border-radius:50px;font-size:.82rem;font-weight:900;
+  margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase;
+}
+.badge-easy{background:#059669;color:#d1fae5}
+.badge-medium{background:#3b82f6;color:#dbeafe}
+.badge-hard{background:#dc2626;color:#fee2e2}
+
+/* ── Progress ── */
+.meta-row{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;color:#c4b5fd;margin-bottom:8px}
+.score-badge{background:linear-gradient(135deg,#d97706,#fbbf24);color:#1c0a00;border-radius:50px;padding:4px 14px;font-weight:900}
+.progress-bar-wrap{width:100%;background:rgba(255,255,255,.1);border-radius:50px;height:14px;margin:0 0 10px;overflow:hidden}
+.progress-bar-fill{height:14px;border-radius:50px;background:linear-gradient(90deg,#8b5cf6,#ec4899,#f59e0b);transition:width .5s ease;position:relative}
+.progress-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 1.5s infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.stars-row{font-size:1.3rem;letter-spacing:1px;min-height:26px;margin:4px 0 6px}
+.fun-msg{font-size:.95rem;font-weight:700;color:#f0abfc;min-height:22px;margin-bottom:8px}
+
+/* ── Timer (hard mode) ── */
+.timer-wrap{display:none;align-items:center;gap:8px;justify-content:center;margin-bottom:10px}
+.timer-wrap.visible{display:flex}
+.timer-bar-wrap{flex:1;background:rgba(255,255,255,.1);border-radius:50px;height:10px;overflow:hidden}
+.timer-bar{height:10px;border-radius:50px;background:linear-gradient(90deg,#34d399,#fbbf24,#f87171);transition:width .1s linear}
+.timer-label{color:#fbbf24;font-weight:900;font-size:.95rem;min-width:36px}
+
+/* ── Card flip ── */
+.card-scene{width:100%;min-height:148px;perspective:1000px;margin:8px 0;cursor:pointer}
+.card-inner{width:100%;min-height:148px;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.2,.2,1)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-face {
+  position:absolute;width:100%;min-height:148px;
+  border-radius:22px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
+}
+.card-front {
+  background:linear-gradient(135deg,#7c3aed,#db2777);
+  color:#fff;font-size:1.25rem;font-weight:900;
+  box-shadow:0 8px 30px rgba(124,58,237,.5);
+}
+.card-front .flip-icon{font-size:2.6rem;margin-bottom:8px;animation:bounce 1.6s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.card-back {
+  background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.2);
+  transform:rotateY(180deg);font-size:1.15rem;color:#e9d5ff;line-height:1.6;
+  position:absolute;top:0;left:0;text-align:center;
+}
+.card-back .blank{color:#f0abfc;font-weight:900;font-size:1.25rem;border-bottom:3px dotted #f0abfc}
+
+/* ── Feedback ── */
+.feedback-box {
+  border-radius:16px;padding:14px 18px;margin:12px 0;
+  text-align:left;display:none;font-size:.95rem;
+  border-left:5px solid;
+}
+.feedback-box.correct{background:rgba(5,150,105,.25);border-color:#34d399;color:#d1fae5}
+.feedback-box.wrong{background:rgba(220,38,38,.2);border-color:#f87171;color:#fee2e2}
+.feedback-box strong{font-size:1rem;display:block;margin-bottom:4px}
+
+/* ── End screen ── */
+.final-score-big{font-size:3rem;font-weight:900;color:#f0abfc;margin:8px 0;text-shadow:0 0 30px #c084fc}
+.end-feedback{font-size:1.05rem;color:#c4b5fd;margin:8px 0 18px;line-height:1.5}
+.trophy{font-size:4rem;margin:8px 0;animation:spin 1s cubic-bezier(.34,1.56,.64,1)}
+@keyframes spin{from{transform:rotate(-20deg) scale(.5)}to{transform:rotate(0deg) scale(1)}}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+
+/* ── Certificate ── */
+#cert-screen .panel{border:3px solid #fbbf24;background:linear-gradient(160deg,#1c0a42,#0a1a4a)}
+.cert-inner {
+  border:2px dashed rgba(251,191,36,.5);border-radius:18px;padding:28px 22px;margin:10px 0;
+  background:rgba(255,255,255,.04);
+}
+.cert-title{font-size:1.5rem;color:#fbbf24;font-weight:900;margin:6px 0}
+.cert-name{font-size:1.9rem;color:#f0c6ff;font-weight:900;margin:10px 0;border-bottom:2px solid rgba(240,171,252,.4);padding-bottom:8px}
+.cert-text{font-size:.95rem;color:#c4b5fd;margin:6px 0}
+.cert-score{font-size:1.05rem;font-weight:900;color:#fbbf24;margin:4px 0}
+.cert-date{font-size:.88rem;color:#9f7aea;margin-top:8px}
+.cert-footer{font-size:.8rem;color:#6d5a9e;margin-top:16px}
+
+/* ── Confetti ── */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:fall linear forwards}
+@keyframes fall{from{transform:translateY(-20px) rotate(0deg);opacity:1}to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ── Floating emojis ── */
+.float-emoji{position:fixed;font-size:1.6rem;pointer-events:none;z-index:9998;animation:floatUp 1.2s ease-out forwards}
+@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-80px) scale(1.4)}}
+
+.page-footer{color:rgba(196,181,253,.4);font-size:.82rem;margin-top:16px;position:relative;z-index:1}
+
+@media(max-width:500px){
+  .panel{padding:22px 14px}h1{font-size:1.4rem}
+  .level-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .level-card .lv-icon{font-size:1.7rem}.level-card .lv-name{font-size:.85rem}
+  .level-card .lv-desc{display:none}
+  .final-score-big{font-size:2.2rem}
+}
+@media print{
+  body{background:#fff}
+  #cert-screen .panel{box-shadow:none;background:#fff;border:3px solid #fbbf24}
+  .cert-name,.cert-title{color:#4a2d82}
+  .cert-text,.cert-score,.cert-date,.cert-footer{color:#333}
+  .btn-row,.btn-mute,.page-footer,.stars,.confetti-piece{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- Starfield -->
+<div class="stars" id="stars"></div>
+
+<button class="btn-mute" id="muteBtn">🔊</button>
+
+<!-- ══ START SCREEN ══ -->
+<div class="screen active" id="start-screen">
+  <div class="panel">
+    <h1>🃏 Reciprocal Pronouns<br>Card Flip Challenge</h1>
+    <p class="subtitle">An EnJoyous Education Grammar Adventure ✨</p>
+
+    <div class="rule-box">
+      <p>📌 Use <strong>each other</strong> for <strong>two</strong> people, places, or things.</p>
+      <p>📌 Use <strong>one another</strong> for <strong>more than two</strong>.</p>
+    </div>
+
+    <input type="text" id="nameInput" placeholder="✏️ Type your name here…" maxlength="40"/>
+
+    <p style="color:#c4b5fd;font-weight:700;margin-bottom:12px">Choose your level:</p>
+    <div class="level-grid">
+      <div class="level-card selected" id="lv-easy" onclick="selectLevel('easy')">
+        <span class="lv-icon">🌱</span>
+        <span class="lv-name">Easy</span>
+        <span class="lv-desc">No timer</span>
+      </div>
+      <div class="level-card" id="lv-medium" onclick="selectLevel('medium')">
+        <span class="lv-icon">⚡</span>
+        <span class="lv-name">Medium</span>
+        <span class="lv-desc">30 s timer</span>
+      </div>
+      <div class="level-card" id="lv-hard" onclick="selectLevel('hard')">
+        <span class="lv-icon">🔥</span>
+        <span class="lv-name">Hard</span>
+        <span class="lv-desc">15 s timer</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startGame()">🚀 Start Mission</button>
+  </div>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div class="screen" id="game-screen">
+  <div class="panel">
+
+    <div id="levelBadgeWrap" style="margin-bottom:4px"></div>
+
+    <div class="meta-row">
+      <span id="cardCounter">Card 1 of 15</span>
+      <span class="score-badge">⭐ <span id="scoreDisplay">0</span></span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+
+    <!-- Timer (medium/hard) -->
+    <div class="timer-wrap" id="timerWrap">
+      <span id="timerLabel" class="timer-label">30s</span>
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="timerBar" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div class="stars-row" id="starsRow"></div>
+    <div class="fun-msg" id="funMsg"></div>
+
+    <!-- Card -->
+    <div class="card-scene" id="cardScene" onclick="flipCard()">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face card-front">
+          <div class="flip-icon">🃏</div>
+          Click to flip!
+        </div>
+        <div class="card-face card-back" id="cardBack"></div>
+      </div>
+    </div>
+
+    <!-- Answer buttons — always in DOM, visibility toggled -->
+    <div id="answerButtons" style="margin-top:12px;visibility:hidden;pointer-events:none">
+      <button class="btn-answer" id="btn1" onclick="checkAnswer(0)"></button>
+      <button class="btn-answer" id="btn2" onclick="checkAnswer(1)"></button>
+    </div>
+
+    <div class="feedback-box" id="feedbackBox">
+      <strong id="feedbackTitle"></strong>
+      <p id="feedbackText"></p>
+    </div>
+
+    <button class="btn btn-next" id="nextBtn" style="display:none" onclick="nextCard()">Next Card ➡️</button>
+  </div>
+</div>
+
+<!-- ══ END SCREEN ══ -->
+<div class="screen" id="end-screen">
+  <div class="panel">
+    <div class="trophy" id="trophyEmoji">🏆</div>
+    <h2 id="playerNameEnd"></h2>
+    <p class="subtitle">You completed the challenge!</p>
+    <div class="final-score-big" id="finalScoreDisplay">0 / 15</div>
+    <p class="end-feedback" id="endFeedback"></p>
+    <div class="stars-row" id="finalStars"></div>
+    <div class="btn-row">
+      <button class="btn btn-cert" onclick="showCert()">🎓 Claim Certificate</button>
+      <button class="btn btn-replay" onclick="resetGame()">🔄 Play Again</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CERTIFICATE SCREEN ══ -->
+<div class="screen" id="cert-screen">
+  <div class="panel">
+    <div class="cert-inner">
+      <div style="font-size:2.5rem">🏅</div>
+      <div class="cert-title">Certificate of Achievement</div>
+      <div class="cert-name" id="certName"></div>
+      <div class="cert-text">has successfully completed the</div>
+      <div style="font-weight:900;color:#f0abfc;margin:4px 0">Reciprocal Pronouns Card Flip Challenge</div>
+      <div class="cert-score" id="certScore"></div>
+      <div class="cert-date" id="certDate"></div>
+      <div class="cert-footer">© EnJoyous Education</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-print" onclick="window.print()">🖨️ Print Certificate</button>
+      <button class="btn btn-replay" onclick="resetGame()">🔄 Play Again</button>
+    </div>
+  </div>
+</div>
+
+<p class="page-footer">© EnJoyous Education</p>
+
+<script>
+/* ═══════════════════════════════════════════
+   QUESTION DATA  — edit sentences here
+   ═══════════════════════════════════════════ */
+const cards = [
+  {sentence:"The two sisters helped ______ with their homework.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two sisters, so we use each other."},
+  {sentence:"The pupils in the class encouraged ______ before the test.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are many pupils in the class, so we use one another."},
+  {sentence:"Ali and Ben smiled at ______ after the game.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"Ali and Ben are two people, so we use each other."},
+  {sentence:"The three kittens chased ______ around the room.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are three kittens, so we use one another."},
+  {sentence:"The two schools are located near ______.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two schools, so we use each other."},
+  {sentence:"The players passed the ball to ______ during training.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are many players, so we use one another."},
+  {sentence:"The twins often borrow ______ clothes.",
+   options:["each other's","one another's"],answer:"each other's",
+   explanation:"There are two twins, so we use each other's for possession."},
+  {sentence:"The group members respected ______ opinions.",
+   options:["each other's","one another's"],answer:"one another's",
+   explanation:"There are more than two group members, so we use one another's for possession."},
+  {sentence:"The two cats looked at ______ quietly.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two cats, so we use each other."},
+  {sentence:"The children shared their snacks with ______.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are many children, so we use one another."},
+  {sentence:"The two friends sent messages to ______ every evening.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two friends, so we use each other."},
+  {sentence:"All the families in the village supported ______ after the flood.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are many families, so we use one another."},
+  {sentence:"The two restaurants are opposite ______.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two restaurants, so we use each other."},
+  {sentence:"The dancers moved around ______ in a circle.",
+   options:["each other","one another"],answer:"one another",
+   explanation:"There are many dancers, so we use one another."},
+  {sentence:"The two superheroes saved ______ from danger.",
+   options:["each other","one another"],answer:"each other",
+   explanation:"There are two superheroes, so we use each other."}
+];
+
+const funMessages = [
+  "You're on fire! 🔥","Two = each other! 👫",
+  "More than two = one another! 👨‍👩‍👧‍👦","Count carefully! 🔢",
+  "Keep going, star! 🌟","Grammar hero! 🦸","Almost there! 💪",
+  "Brilliant thinking! 🧠","You've got this! ✨"
+];
+
+/* ═══════════════════════════════════════════
+   LEVEL CONFIG
+   ═══════════════════════════════════════════ */
+const LEVELS = {
+  easy:   {label:"🌱 Easy",   cls:"badge-easy",   timer:0},
+  medium: {label:"⚡ Medium", cls:"badge-medium", timer:30},
+  hard:   {label:"🔥 Hard",   cls:"badge-hard",   timer:15}
+};
+
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+let playerName="",currentCard=0,score=0;
+let answered=false,muted=false,selectedLevel="easy";
+let timerInterval=null,timerLeft=0,timerMax=0;
+let audioCtx=null;
+
+/* ═══════════════════════════════════════════
+   STARFIELD
+   ═══════════════════════════════════════════ */
+(function buildStars(){
+  const wrap=document.getElementById('stars');
+  for(let i=0;i<90;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`
+      width:${sz}px;height:${sz}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --d:${(Math.random()*3+1.5).toFixed(1)}s;
+      --op:${(Math.random()*.7+.15).toFixed(2)};
+    `;
+    wrap.appendChild(s);
+  }
+})();
+
+/* ═══════════════════════════════════════════
+   AUDIO
+   ═══════════════════════════════════════════ */
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(f,type,dur,vol=.28){
+  if(muted)return;
+  try{
+    const c=getCtx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=type;o.frequency.setValueAtTime(f,c.currentTime);
+    g.gain.setValueAtTime(vol,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+    o.start(c.currentTime);o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+function playCorrect(){tone(523,'sine',.1);setTimeout(()=>tone(659,'sine',.1),110);setTimeout(()=>tone(784,'sine',.22),220)}
+function playWrong(){tone(250,'sawtooth',.28,.14);setTimeout(()=>tone(200,'sawtooth',.28,.09),200)}
+function playCelebration(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,'sine',.2),i*90))}
+function playTick(){tone(880,'sine',.05,.15)}
+
+/* ═══════════════════════════════════════════
+   SCREEN SWITCH
+   ═══════════════════════════════════════════ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   LEVEL SELECT
+   ═══════════════════════════════════════════ */
+function selectLevel(lv){
+  selectedLevel=lv;
+  ['easy','medium','hard'].forEach(l=>{
+    document.getElementById('lv-'+l).classList.toggle('selected',l===lv);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   START
+   ═══════════════════════════════════════════ */
+function startGame(){
+  const n=document.getElementById('nameInput').value.trim();
+  if(!n){alert('Please type your name first! 😊');return;}
+  playerName=n;currentCard=0;score=0;
+  show('game-screen');
+  document.getElementById('muteBtn').style.display='flex';
+  loadCard();
+}
+
+/* ═══════════════════════════════════════════
+   LOAD CARD
+   ═══════════════════════════════════════════ */
+function loadCard(){
+  answered=false;
+  stopTimer();
+
+  const c=cards[currentCard];
+  const lvCfg=LEVELS[selectedLevel];
+
+  // Reset card flip
+  const inner=document.getElementById('cardInner');
+  // Force reflow so removing+re-adding class restarts transition
+  inner.style.transition='none';
+  inner.classList.remove('flipped');
+  void inner.offsetWidth; // reflow
+  inner.style.transition='';
+
+  // Card sentence
+  document.getElementById('cardBack').innerHTML=
+    c.sentence.replace('______','<span class="blank">______</span>');
+
+  // Answer buttons — keep in DOM, just lock them until card flipped
+  const ab=document.getElementById('answerButtons');
+  const b1=document.getElementById('btn1');
+  const b2=document.getElementById('btn2');
+  ab.style.visibility='hidden';
+  ab.style.pointerEvents='none';
+  b1.textContent=c.options[0];b1.className='btn-answer';b1.disabled=false;
+  b2.textContent=c.options[1];b2.className='btn-answer';b2.disabled=false;
+
+  // Feedback & next
+  document.getElementById('feedbackBox').style.display='none';
+  document.getElementById('nextBtn').style.display='none';
+
+  // Card clickable again
+  document.getElementById('cardScene').style.pointerEvents='auto';
+
+  // Meta
+  document.getElementById('cardCounter').textContent=`Card ${currentCard+1} of ${cards.length}`;
+  document.getElementById('scoreDisplay').textContent=score;
+  document.getElementById('progressFill').style.width=(currentCard/cards.length*100)+'%';
+  document.getElementById('starsRow').textContent='⭐'.repeat(score);
+  document.getElementById('funMsg').textContent=funMessages[currentCard%funMessages.length];
+
+  // Level badge
+  document.getElementById('levelBadgeWrap').innerHTML=
+    `<span class="level-badge ${lvCfg.cls}">${lvCfg.label}</span>`;
+
+  // Timer visibility
+  const tw=document.getElementById('timerWrap');
+  if(lvCfg.timer>0){tw.classList.add('visible')}
+  else{tw.classList.remove('visible')}
+}
+
+/* ═══════════════════════════════════════════
+   FLIP CARD
+   ═══════════════════════════════════════════ */
+function flipCard(){
+  if(answered)return;
+  const inner=document.getElementById('cardInner');
+  if(inner.classList.contains('flipped'))return;
+  inner.classList.add('flipped');
+  document.getElementById('cardScene').style.pointerEvents='none';
+
+  // Show answer buttons after flip animation
+  setTimeout(()=>{
+    const ab=document.getElementById('answerButtons');
+    ab.style.visibility='visible';
+    ab.style.pointerEvents='auto';
+    // Start timer if needed
+    const lvCfg=LEVELS[selectedLevel];
+    if(lvCfg.timer>0) startTimer(lvCfg.timer);
+  },580);
+}
+
+/* ═══════════════════════════════════════════
+   TIMER
+   ═══════════════════════════════════════════ */
+function startTimer(sec){
+  timerMax=sec;timerLeft=sec;
+  updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timerLeft-=.1;
+    if(timerLeft<=3)playTick();
+    if(timerLeft<=0){
+      timerLeft=0;updateTimerUI();
+      clearInterval(timerInterval);
+      timeUp();
+    } else { updateTimerUI(); }
+  },100);
+}
+function stopTimer(){
+  clearInterval(timerInterval);timerInterval=null;
+  document.getElementById('timerBar').style.width='100%';
+  document.getElementById('timerLabel').textContent='';
+}
+function updateTimerUI(){
+  const pct=Math.max(0,timerLeft/timerMax*100);
+  document.getElementById('timerBar').style.width=pct+'%';
+  document.getElementById('timerLabel').textContent=Math.ceil(timerLeft)+'s';
+}
+function timeUp(){
+  if(answered)return;
+  answered=true;
+  const b1=document.getElementById('btn1'),b2=document.getElementById('btn2');
+  b1.disabled=true;b2.disabled=true;
+  const c=cards[currentCard];
+  const ci=c.options.indexOf(c.answer);
+  (ci===0?b1:b2).classList.add('correct');
+  playWrong();
+  showFeedback(false,'⏰ Time\'s up! '+c.explanation);
+  document.getElementById('nextBtn').style.display='inline-flex';
+}
+
+/* ═══════════════════════════════════════════
+   CHECK ANSWER
+   ═══════════════════════════════════════════ */
+function checkAnswer(idx){
+  if(answered)return;
+  answered=true;
+  stopTimer();
+
+  const c=cards[currentCard];
+  const isCorrect=c.options[idx]===c.answer;
+  const b1=document.getElementById('btn1'),b2=document.getElementById('btn2');
+  b1.disabled=true;b2.disabled=true;
+
+  if(isCorrect){
+    score++;
+    (idx===0?b1:b2).classList.add('correct');
+    playCorrect();
+    showFeedback(true,'✅ Correct! '+c.explanation);
+    spawnFloatEmoji(['🎉','⭐','✨','🌟'][Math.floor(Math.random()*4)]);
+  } else {
+    (idx===0?b1:b2).classList.add('wrong');
+    const ci=c.options.indexOf(c.answer);
+    (ci===0?b1:b2).classList.add('correct');
+    playWrong();
+    showFeedback(false,'❌ Not quite! '+c.explanation);
+  }
+
+  document.getElementById('scoreDisplay').textContent=score;
+  document.getElementById('starsRow').textContent='⭐'.repeat(score);
+  document.getElementById('nextBtn').style.display='inline-flex';
+}
+
+function showFeedback(ok,txt){
+  const box=document.getElementById('feedbackBox');
+  box.className='feedback-box '+(ok?'correct':'wrong');
+  document.getElementById('feedbackTitle').textContent=ok?'Great job! 🎉':'Not quite…';
+  document.getElementById('feedbackText').textContent=txt;
+  box.style.display='block';
+}
+
+/* ═══════════════════════════════════════════
+   NEXT CARD
+   ═══════════════════════════════════════════ */
+function nextCard(){
+  currentCard++;
+  if(currentCard>=cards.length) endGame();
+  else loadCard();
+}
+
+/* ═══════════════════════════════════════════
+   END GAME
+   ═══════════════════════════════════════════ */
+function endGame(){
+  stopTimer();
+  playCelebration();
+  launchConfetti();
+  show('end-screen');
+
+  document.getElementById('playerNameEnd').textContent='🎉 Well done, '+playerName+'!';
+  document.getElementById('finalScoreDisplay').textContent=score+' / '+cards.length;
+  document.getElementById('finalStars').textContent='⭐'.repeat(score);
+  document.getElementById('progressFill').style.width='100%';
+
+  let fb,tr;
+  if(score>=13){fb='Excellent! You are a Reciprocal Pronouns Champion! 🏆';tr='🏆'}
+  else if(score>=10){fb='Great work! You understand the rule very well. 🎖️';tr='🥇'}
+  else{fb='Good effort! Remember to count the people or things first. 📚';tr='🌟'}
+  document.getElementById('endFeedback').textContent=fb;
+  document.getElementById('trophyEmoji').textContent=tr;
+}
+
+/* ═══════════════════════════════════════════
+   CERTIFICATE
+   ═══════════════════════════════════════════ */
+function showCert(){
+  show('cert-screen');
+  document.getElementById('certName').textContent=playerName;
+  document.getElementById('certScore').textContent='Score: '+score+' out of '+cards.length;
+  const d=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('certDate').textContent='Date: '+d;
+}
+
+/* ═══════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════ */
+function resetGame(){
+  stopTimer();
+  currentCard=0;score=0;playerName='';
+  document.getElementById('nameInput').value='';
+  document.getElementById('muteBtn').style.display='none';
+  selectLevel('easy');
+  show('start-screen');
+}
+
+/* ═══════════════════════════════════════════
+   MUTE
+   ═══════════════════════════════════════════ */
+document.getElementById('muteBtn').addEventListener('click',function(){
+  muted=!muted;this.textContent=muted?'🔇':'🔊';
+});
+
+/* ═══════════════════════════════════════════
+   CONFETTI
+   ═══════════════════════════════════════════ */
+function launchConfetti(){
+  const colors=['#f0abfc','#a78bfa','#34d399','#fbbf24','#f87171','#60a5fa','#fff'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`
+      left:${Math.random()*100}vw;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${Math.random()*10+6}px;height:${Math.random()*10+6}px;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-duration:${(Math.random()*2+1.5).toFixed(1)}s;
+      animation-delay:${(Math.random()*.8).toFixed(2)}s;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+function spawnFloatEmoji(em){
+  const el=document.createElement('div');
+  el.className='float-emoji';
+  el.textContent=em;
+  el.style.cssText=`left:${30+Math.random()*40}%;bottom:30%;`;
+  document.body.appendChild(el);
+  el.addEventListener('animationend',()=>el.remove());
+}
+
+/* Enter key on name input */
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')startGame()});
+</script>
+</body>
+</html>
